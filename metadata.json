@@ -1,0 +1,5 @@
+{
+  "name": "ChronoChantier - Gestion de Chantier Intelligente",
+  "description": "Une application complète pour la gestion de chantiers de construction, incluant le suivi des projets, la gestion des tâches, les rapports quotidiens et des outils d'analyse de risques assistés par l'IA.",
+  "requestFramePermissions": []
+}
