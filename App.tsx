@@ -9,7 +9,7 @@ import { Projects } from './pages/Projects';
 import { Planning } from './pages/Planning';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { DailyReportGenerator } from './pages/DailyReportGenerator';
-import { RiskAnalysis } from './pages/RiskAnalysis';
+
 import { Team } from './pages/Team';
 import { Members } from './pages/Members';
 import { Clocking } from './pages/Clocking';
@@ -128,7 +128,7 @@ const AppContent: React.FC = () => {
       case 'Suppliers': return 'Fournisseurs';
       case 'Reports': return 'Rapports';
       case 'DailyReportGenerator': return 'Rapport Quotidien';
-      case 'RiskAnalysis': return 'Analyse Risques';
+
       case 'Settings': return 'Paramètres';
       default: return 'ChronoChantier';
     }
@@ -181,8 +181,7 @@ const AppContent: React.FC = () => {
         return <Planning projects={projects} setProjects={setProjects} teamMembers={teamMembers} />;
       case 'DailyReportGenerator':
         return <DailyReportGenerator />;
-      case 'RiskAnalysis':
-        return <RiskAnalysis />;
+
       case 'Team':
         return (
           <Team

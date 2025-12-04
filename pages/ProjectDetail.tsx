@@ -3,6 +3,7 @@ import type { Project, Task, Document, Team, TeamMember, Page } from '../types';
 import { ProjectStatus, TaskStatus } from '../types';
 import { Icon } from '../components/Icon';
 import { TaskFormModal } from '../components/TaskFormModal';
+import { ReportGenerationModal } from '../components/ReportGenerationModal';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmation } from '../contexts/ConfirmationContext';
 
@@ -234,6 +235,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, s
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'team' | 'documents' | 'reports'>('overview');
     const [isTaskModalOpen, setTaskModalOpen] = useState(false);
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
+    const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -372,6 +374,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, s
                 isDangerous: true
             }
         );
+    };
+
+    const handleSaveReport = (document: Document) => {
+        handleUpdateProject({
+            ...project,
+            documents: [...project.documents, document]
+        });
+        showToast('Rapport enregistré avec succès', 'success');
     };
 
     const renderTabContent = () => {
@@ -613,19 +623,78 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, s
                     </div>
                 );
             case 'reports':
+                const reports = project.documents.filter(d => d.name.startsWith('Rapport_') || d.name.includes('.md'));
+
                 return (
-                    <div className="bg-white dark:bg-card-dark p-12 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center animate-fadeIn">
-                        <div className="w-16 h-16 bg-pink-50 dark:bg-pink-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon name="report" className="w-8 h-8 text-pink-400" />
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="flex justify-between items-center bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Rapports du projet</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{reports.length} rapports générés</p>
+                            </div>
+                            <button
+                                onClick={() => setReportModalOpen(true)}
+                                className="flex items-center bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors"
+                            >
+                                <Icon name="plus" className="w-5 h-5 mr-2" />
+                                Nouveau Rapport
+                            </button>
                         </div>
-                        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Aucun rapport généré</h3>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1 mb-6">Les rapports quotidiens et incidents apparaîtront ici.</p>
-                        <button
-                            onClick={() => onNavigate('DailyReportGenerator')}
-                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold transition-colors"
-                        >
-                            Aller au générateur
-                        </button>
+
+                        {reports.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {reports.map(report => (
+                                    <div key={report.id} className="bg-white dark:bg-card-dark p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                                <Icon name="report" className="w-6 h-6" />
+                                            </div>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <a
+                                                    href={report.url}
+                                                    download={report.name}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                                    title="Télécharger"
+                                                >
+                                                    <Icon name="archive" className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDeleteDocument(report.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Supprimer"
+                                                >
+                                                    <Icon name="trash" className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1 truncate" title={report.name}>
+                                            {report.name.replace('.md', '').replace(/_/g, ' ')}
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                                            Généré le {new Date(report.uploadedAt).toLocaleDateString('fr-FR')}
+                                        </p>
+                                        <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-3">
+                                            <span>{report.size}</span>
+                                            <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-300">Markdown</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white dark:bg-card-dark p-12 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                                <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Icon name="report" className="w-8 h-8 text-slate-400" />
+                                </div>
+                                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Aucun rapport</h3>
+                                <p className="text-slate-500 dark:text-slate-400 mt-1 mb-6">Générez votre premier rapport de chantier.</p>
+                                <button
+                                    onClick={() => setReportModalOpen(true)}
+                                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                                >
+                                    Créer un rapport maintenant
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
             default:
@@ -647,6 +716,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, s
                 teams={teams}
                 currentTeamId={assignedTeam?.id}
                 onAssign={handleAssignTeam}
+            />
+            <ReportGenerationModal
+                isOpen={isReportModalOpen}
+                onClose={() => setReportModalOpen(false)}
+                project={project}
+                onSave={handleSaveReport}
             />
 
             <div className="space-y-6 h-full flex flex-col">

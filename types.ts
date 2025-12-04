@@ -1,24 +1,24 @@
 
-export type Page = 'Dashboard' | 'Projects' | 'Planning' | 'DailyReportGenerator' | 'RiskAnalysis' | 'Team' | 'Members' | 'Material' | 'Suppliers' | 'Clocking' | 'Settings' | 'Reports' | 'Finance';
+export type Page = 'Dashboard' | 'Projects' | 'Planning' | 'DailyReportGenerator' | 'Team' | 'Members' | 'Material' | 'Suppliers' | 'Clocking' | 'Settings' | 'Reports' | 'Finance';
 
 export enum TaskStatus {
-  ToDo = 'À Faire',
-  InProgress = 'En Cours',
-  Done = 'Terminé',
+    ToDo = 'À Faire',
+    InProgress = 'En Cours',
+    Done = 'Terminé',
 }
 
 export interface Task {
-  id: string;
-  title: string;
-  assignedTo: string;
-  dueDate: string;
-  status: TaskStatus;
-  // Nouveaux champs pour le planning avancé
-  startTime?: string; // Format "HH:mm"
-  endTime?: string;   // Format "HH:mm"
-  category?: 'Meeting' | 'Work' | 'Review' | 'Other' | 'Team' | 'Planning';
-  description?: string;
-  location?: string; // Lien Meet ou salle
+    id: string;
+    title: string;
+    assignedTo: string;
+    dueDate: string;
+    status: TaskStatus;
+    // Nouveaux champs pour le planning avancé
+    startTime?: string; // Format "HH:mm"
+    endTime?: string;   // Format "HH:mm"
+    category?: 'Meeting' | 'Work' | 'Review' | 'Other' | 'Team' | 'Planning';
+    description?: string;
+    location?: string; // Lien Meet ou salle
 }
 
 export enum ProjectStatus {
@@ -46,18 +46,18 @@ export interface Document {
 
 
 export interface Project {
-  id: string;
-  name: string;
-  address: string;
-  startDate: string;
-  endDate: string;
-  status: ProjectStatus;
-  manager: string;
-  budget: number;
-  featuredImage?: string; // Image de mise en avant
-  tasks: Task[];
-  dailyLogs: DailyLog[];
-  documents: Document[];
+    id: string;
+    name: string;
+    address: string;
+    startDate: string;
+    endDate: string;
+    status: ProjectStatus;
+    manager: string;
+    budget: number;
+    featuredImage?: string; // Image de mise en avant
+    tasks: Task[];
+    dailyLogs: DailyLog[];
+    documents: Document[];
 }
 
 export interface TeamMember {

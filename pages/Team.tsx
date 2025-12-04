@@ -112,6 +112,15 @@ export const Team: React.FC<TeamProps> = ({ teams, setTeams, teamMembers, projec
                         const project = projects.find(p => p.id === team.projectId);
                         const colorClasses = getColorClass(team.color);
 
+                        const getInitials = (name: string) => {
+                            return name
+                                .split(' ')
+                                .map(n => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase();
+                        };
+
                         return (
                             <div key={team.id} className="bg-white dark:bg-card-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden hover:shadow-md transition-all">
                                 <div className={`px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center ${colorClasses.split(' ')[0].replace('/30', '/10')} bg-opacity-50`}>
@@ -137,7 +146,13 @@ export const Team: React.FC<TeamProps> = ({ teams, setTeams, teamMembers, projec
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Chef d'équipe</p>
                                         {leader ? (
                                             <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
-                                                <img src={leader.avatarUrl} alt={leader.name} className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-700" />
+                                                {leader.avatarUrl ? (
+                                                    <img src={leader.avatarUrl} alt={leader.name} className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-700" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-700 bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                                                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{getInitials(leader.name)}</span>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{leader.name}</p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">{leader.role}</p>
@@ -157,12 +172,21 @@ export const Team: React.FC<TeamProps> = ({ teams, setTeams, teamMembers, projec
                                             {members.length > 0 ? (
                                                 members.map(member => (
                                                     <div key={member.id} className="relative group">
-                                                        <img
-                                                            src={member.avatarUrl}
-                                                            alt={member.name}
-                                                            className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-slate-600 cursor-help"
-                                                            title={`${member.name} - ${member.role}`}
-                                                        />
+                                                        {member.avatarUrl ? (
+                                                            <img
+                                                                src={member.avatarUrl}
+                                                                alt={member.name}
+                                                                className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-slate-600 cursor-help"
+                                                                title={`${member.name} - ${member.role}`}
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-600 bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center cursor-help"
+                                                                title={`${member.name} - ${member.role}`}
+                                                            >
+                                                                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{getInitials(member.name)}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))
                                             ) : (

@@ -19,6 +19,15 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, teams, projects
     // Find teams this member belongs to
     const memberTeams = teams.filter(t => t.memberIds.includes(member.id) || t.leaderId === member.id);
 
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+    };
+
     return (
         <div className="bg-white dark:bg-card-dark text-center p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 relative group flex flex-col h-full">
             <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -31,7 +40,13 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, teams, projects
             </div>
 
             <div className="flex-1">
-                <img className="w-24 h-24 mx-auto rounded-full object-cover ring-4 ring-indigo-100 dark:ring-indigo-500/20" src={member.avatarUrl} alt={member.name} />
+                {member.avatarUrl ? (
+                    <img className="w-24 h-24 mx-auto rounded-full object-cover ring-4 ring-indigo-100 dark:ring-indigo-500/20" src={member.avatarUrl} alt={member.name} />
+                ) : (
+                    <div className="w-24 h-24 mx-auto rounded-full ring-4 ring-indigo-100 dark:ring-indigo-500/20 bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{getInitials(member.name)}</span>
+                    </div>
+                )}
                 <h3 className="mt-4 text-lg font-semibold text-slate-800 dark:text-slate-200">{member.name}</h3>
                 <p className="text-indigo-600 dark:text-indigo-400 font-medium">{member.role}</p>
 

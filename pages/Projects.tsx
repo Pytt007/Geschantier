@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Project } from '../types';
 import { ProjectStatus } from '../types';
 import { Icon } from '../components/Icon';
@@ -87,6 +87,18 @@ const ProjectCard: React.FC<{ project: Project; onClick: () => void; onDelete: (
 };
 
 export const Projects: React.FC<ProjectsProps> = ({ projects, setProjects, onProjectSelect, onNewProject, onEditProject, onDeleteProject }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'All'>('All');
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter(project => {
+      const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.manager.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [projects, searchTerm, statusFilter]);
 
   const handleDelete = (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
@@ -101,7 +113,7 @@ export const Projects: React.FC<ProjectsProps> = ({ projects, setProjects, onPro
   return (
     <>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Gestion des Projets</h1>
           <button
             onClick={onNewProject}
@@ -111,20 +123,56 @@ export const Projects: React.FC<ProjectsProps> = ({ projects, setProjects, onPro
             Nouveau Projet
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {projects.map(project => (
-            <div key={project.id} className="relative group">
-              <ProjectCard project={project} onClick={() => onProjectSelect(project.id)} onDelete={(e) => handleDelete(e, project.id)} />
-              <button
-                onClick={(e) => handleEdit(project, e)}
-                className="absolute top-2 right-10 p-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-indigo-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                aria-label="Modifier le projet"
-              >
-                <Icon name="pencil" className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+
+        {/* Filters and Search */}
+        <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex-1 relative">
+            <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Rechercher un projet..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:text-white"
+            />
+          </div>
+          <div className="w-full md:w-64">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'All')}
+              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:text-white"
+            >
+              <option value="All">Tous les statuts</option>
+              <option value={ProjectStatus.Planning}>Planification</option>
+              <option value={ProjectStatus.InProgress}>En Cours</option>
+              <option value={ProjectStatus.OnHold}>En Attente</option>
+              <option value={ProjectStatus.Completed}>Terminé</option>
+            </select>
+          </div>
         </div>
+
+        {filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredProjects.map(project => (
+              <div key={project.id} className="relative group">
+                <ProjectCard project={project} onClick={() => onProjectSelect(project.id)} onDelete={(e) => handleDelete(e, project.id)} />
+                <button
+                  onClick={(e) => handleEdit(project, e)}
+                  className="absolute top-2 right-10 p-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-indigo-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  aria-label="Modifier le projet"
+                >
+                  <Icon name="pencil" className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white dark:bg-card-dark rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+            <Icon name="search" className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Aucun projet trouvé</h3>
+            <p className="text-slate-500 dark:text-slate-400">Essayez de modifier vos critères de recherche.</p>
+          </div>
+        )}
       </div>
     </>
   );

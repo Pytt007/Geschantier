@@ -17,33 +17,32 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-[60] flex justify-center items-center p-4 print:p-0 print:bg-white print:static print:z-auto">
-            
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex justify-center items-center p-4 print:p-0 print:bg-white print:static print:z-auto animate-fadeIn">
+
             {/* Toolbar (Hidden on Print) */}
             <div className="absolute top-4 right-4 flex space-x-4 print:hidden">
-                <button onClick={handlePrint} className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm transition-colors font-medium">
+                <button onClick={handlePrint} className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:shadow-indigo-500/40 font-medium">
                     <Icon name="printer" className="w-5 h-5 mr-2" /> Imprimer / PDF
                 </button>
-                <button onClick={onClose} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition-colors">
+                <button onClick={onClose} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-md transition-colors">
                     <Icon name="close" className="w-6 h-6" />
                 </button>
             </div>
 
             {/* A4 Paper Container */}
-            <div className="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] p-[20mm] shadow-2xl overflow-y-auto max-h-[90vh] print:shadow-none print:max-h-none print:w-full print:max-w-none print:overflow-visible rounded-sm">
-                
+            <div className="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] p-[20mm] shadow-2xl overflow-y-auto max-h-[90vh] print:shadow-none print:max-h-none print:w-full print:max-w-none print:overflow-visible rounded-xl animate-scaleIn">
+
                 {/* Header */}
                 <div className="flex justify-between items-start mb-12">
                     <div>
                         <h1 className="text-4xl font-bold text-slate-900 mb-2">FACTURE</h1>
                         <p className="text-slate-500 font-medium">#{invoice.number}</p>
                         <div className="mt-4">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                                invoice.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
-                                invoice.status === 'Sent' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                invoice.status === 'Overdue' ? 'bg-red-100 text-red-800 border-red-200' :
-                                'bg-gray-100 text-gray-800 border-gray-200'
-                            }`}>
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${invoice.status === 'Paid' ? 'bg-green-100 text-green-800 border-green-200' :
+                                    invoice.status === 'Sent' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                        invoice.status === 'Overdue' ? 'bg-red-100 text-red-800 border-red-200' :
+                                            'bg-gray-100 text-gray-800 border-gray-200'
+                                }`}>
                                 {invoice.status === 'Paid' ? 'Payée' : invoice.status === 'Sent' ? 'Envoyée' : invoice.status === 'Overdue' ? 'En Retard' : 'Brouillon'}
                             </span>
                         </div>
@@ -127,13 +126,13 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen
                         <p className="text-sm text-slate-600">{invoice.notes}</p>
                     </div>
                 )}
-                
+
                 <div className="mt-12 text-center text-xs text-slate-400 print:fixed print:bottom-10 print:left-0 print:w-full">
                     <p>ChronoChantier SAS - Capital de 100 000 000 FCFA - RCCM CI-ABJ-2023-B-12345 - Abidjan</p>
                 </div>
 
             </div>
-            
+
             {/* Print Styles Injection */}
             <style>{`
                 @media print {

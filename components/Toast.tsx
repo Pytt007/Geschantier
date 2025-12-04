@@ -23,36 +23,40 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, duration = 3000
     const getStyles = () => {
         switch (type) {
             case 'success':
-                return 'bg-white dark:bg-card-dark border-l-4 border-l-green-500 text-slate-800 dark:text-slate-100 border-y border-r border-slate-100 dark:border-slate-700';
+                return 'bg-white/90 dark:bg-slate-800/90 border-green-500/20 text-slate-800 dark:text-slate-100';
             case 'error':
-                return 'bg-white dark:bg-card-dark border-l-4 border-l-red-500 text-slate-800 dark:text-slate-100 border-y border-r border-slate-100 dark:border-slate-700';
+                return 'bg-white/90 dark:bg-slate-800/90 border-red-500/20 text-slate-800 dark:text-slate-100';
             case 'warning':
-                return 'bg-white dark:bg-card-dark border-l-4 border-l-amber-500 text-slate-800 dark:text-slate-100 border-y border-r border-slate-100 dark:border-slate-700';
+                return 'bg-white/90 dark:bg-slate-800/90 border-amber-500/20 text-slate-800 dark:text-slate-100';
             case 'info':
             default:
-                return 'bg-white dark:bg-card-dark border-l-4 border-l-indigo-500 text-slate-800 dark:text-slate-100 border-y border-r border-slate-100 dark:border-slate-700';
+                return 'bg-white/90 dark:bg-slate-800/90 border-indigo-500/20 text-slate-800 dark:text-slate-100';
         }
     };
 
-    const getIconColor = () => {
+    const getIconStyles = () => {
         switch (type) {
-            case 'success': return 'text-green-500';
-            case 'error': return 'text-red-500';
-            case 'warning': return 'text-amber-500';
-            case 'info': default: return 'text-indigo-500';
+            case 'success': return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+            case 'error': return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+            case 'warning': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+            case 'info': default: return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400';
         }
     };
 
     const iconName = type === 'success' ? 'check' : type === 'error' ? 'report' : type === 'warning' ? 'shield' : 'briefcase';
 
     return (
-        <div className={`flex items-center p-4 mb-3 rounded-r-lg shadow-lg w-full max-w-sm animate-slideInRight ${getStyles()}`}>
-            <div className={`flex-shrink-0 mr-3 ${getIconColor()}`}>
-                <Icon name={iconName} className="w-6 h-6" />
+        <div className={`flex items-center p-4 mb-3 rounded-xl shadow-xl backdrop-blur-md border animate-slideInRight w-full max-w-sm ${getStyles()}`}>
+            <div className={`flex-shrink-0 mr-4 p-2 rounded-full ${getIconStyles()}`}>
+                <Icon name={iconName} className="w-5 h-5" />
             </div>
-            <div className="flex-1 text-sm font-medium">{message}</div>
-            <button onClick={() => onClose(id)} className="ml-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                <span className="text-xl">&times;</span>
+            <div className="flex-1 text-sm font-medium leading-relaxed">{message}</div>
+            <button
+                onClick={() => onClose(id)}
+                className="ml-4 p-1 -mr-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+                aria-label="Close notification"
+            >
+                <Icon name="x" className="w-4 h-4" />
             </button>
         </div>
     );

@@ -107,7 +107,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onNavigate, onNe
                         <div className="space-y-3">
                             <button onClick={onNewProject} className="w-full text-left flex items-center bg-indigo-600 text-white font-semibold px-4 py-3 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors"><Icon name="plus" className="w-5 h-5 mr-3" /> Nouveau Projet</button>
                             <button onClick={() => onNavigate('DailyReportGenerator')} className="w-full text-left flex items-center bg-pink-600 text-white font-semibold px-4 py-3 rounded-lg shadow-sm hover:bg-pink-700 transition-colors"><Icon name="report" className="w-5 h-5 mr-3" /> Générer un Rapport</button>
-                            <button onClick={() => onNavigate('RiskAnalysis')} className="w-full text-left flex items-center bg-amber-500 text-white font-semibold px-4 py-3 rounded-lg shadow-sm hover:bg-amber-600 transition-colors"><Icon name="shield" className="w-5 h-5 mr-3" /> Analyser un Risque</button>
+
                         </div>
                     </div>
                 </div>

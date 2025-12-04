@@ -27,7 +27,7 @@ const calculateDuration = (start: string, end: string) => {
 // Helpers pour le formatage des dates de groupe
 const getWeekLabel = (dateStr: string) => {
     const date = new Date(dateStr);
-    const day = date.getDay(); 
+    const day = date.getDay();
     // Ajustement pour avoir lundi comme premier jour
     const diffToMon = date.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(date);
@@ -38,7 +38,7 @@ const getWeekLabel = (dateStr: string) => {
 
     const start = monday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     const end = sunday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    
+
     return `Semaine du ${start} au ${end}`;
 };
 
@@ -48,12 +48,27 @@ const getMonthLabel = (dateStr: string) => {
     return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
+import { ConfirmationModal } from '../components/ConfirmationModal';
+import { ClockingFormModal } from '../components/ClockingFormModal';
+
 export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries, setClockingEntries }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [formattedDate, setFormattedDate] = useState('');
     const [viewMode, setViewMode] = useState<'daily' | 'history'>('daily');
     const [historyGroup, setHistoryGroup] = useState<'weekly' | 'monthly'>('weekly');
     const [selectedHistoryDate, setSelectedHistoryDate] = useState<string | null>(null);
+
+    // Reset Modal State
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+    const [memberToReset, setMemberToReset] = useState<string | null>(null);
+
+    // Delete Confirmation State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+
+    // CRUD Modal State
+    const [isClockingModalOpen, setIsClockingModalOpen] = useState(false);
+    const [entryToEdit, setEntryToEdit] = useState<ClockingEntry | null>(null);
 
     useEffect(() => {
         setFormattedDate(currentDate.toISOString().split('T')[0]);
@@ -85,14 +100,74 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
 
     const handleClockOut = (memberId: string, entryId: string) => {
         const currentTime = getCurrentTime();
-        setClockingEntries(prev => prev.map(entry => 
-            entry.id === entryId 
-                ? { ...entry, endTime: currentTime, status: 'completed' } 
+        setClockingEntries(prev => prev.map(entry =>
+            entry.id === entryId
+                ? { ...entry, endTime: currentTime, status: 'completed' }
                 : entry
         ));
     };
 
+    const handleReset = (memberId: string) => {
+        setMemberToReset(memberId);
+        setIsResetModalOpen(true);
+    };
+
+    const confirmReset = () => {
+        if (memberToReset) {
+            setClockingEntries(prev => prev.filter(entry => !(entry.memberId === memberToReset && entry.date === formattedDate)));
+            setMemberToReset(null);
+            setIsResetModalOpen(false);
+        }
+    };
+
+    const handleNewEntry = () => {
+        setEntryToEdit(null);
+        setIsClockingModalOpen(true);
+    };
+
+    const handleEditEntry = (entry: ClockingEntry) => {
+        setEntryToEdit(entry);
+        setIsClockingModalOpen(true);
+    };
+
+    const handleDeleteEntry = (entryId: string) => {
+        setEntryToDelete(entryId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDeleteEntry = () => {
+        if (entryToDelete) {
+            setClockingEntries(prev => prev.filter(e => e.id !== entryToDelete));
+            setIsDeleteModalOpen(false);
+            setEntryToDelete(null);
+        }
+    };
+
+    const handleSaveEntry = (entryData: Omit<ClockingEntry, 'id'> | ClockingEntry) => {
+        if ('id' in entryData) {
+            // Update
+            setClockingEntries(prev => prev.map(e => e.id === entryData.id ? entryData : e));
+        } else {
+            // Create
+            const newEntry: ClockingEntry = {
+                ...entryData,
+                id: `clk-${Date.now()}`,
+            };
+            setClockingEntries(prev => [...prev, newEntry]);
+        }
+        setIsClockingModalOpen(false);
+    };
+
     const getMember = (id: string) => teamMembers.find(m => m.id === id);
+
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+    };
 
     // Stats du jour courant (Vue Journalière)
     const dayEntries = clockingEntries.filter(entry => entry.date === formattedDate);
@@ -133,7 +208,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
     // Rendu de la vue détaillée d'une journée spécifique dans l'historique
     const renderHistoryDetail = () => {
         if (!selectedHistoryDate) return null;
-        
+
         const entries = historyByDate[selectedHistoryDate] || [];
         const totalMembers = teamMembers.length;
         const presentMembers = entries.length;
@@ -142,7 +217,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
         return (
             <div className="space-y-6 animate-fadeIn">
                 <div className="flex items-center justify-between">
-                    <button 
+                    <button
                         onClick={() => setSelectedHistoryDate(null)}
                         className="flex items-center text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors"
                     >
@@ -161,7 +236,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                             <p className="text-sm text-slate-500 dark:text-slate-400">Taux de Présence</p>
                             <p className="text-xl font-bold text-slate-800 dark:text-slate-200">{presenceRate}%</p>
                         </div>
-                         <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                             <Icon name="chart-pie" className="w-5 h-5" />
                         </div>
                     </div>
@@ -186,6 +261,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                 <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Heure Départ</th>
                                 <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Durée</th>
                                 <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Statut</th>
+                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -195,7 +271,15 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                     <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                {member && <img src={member.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />}
+                                                {member && (
+                                                    member.avatarUrl ? (
+                                                        <img src={member.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                                                            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{getInitials(member.name)}</span>
+                                                        </div>
+                                                    )
+                                                )}
                                                 <div>
                                                     <p className="font-medium text-slate-800 dark:text-slate-200">{member?.name || 'Inconnu'}</p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">{member?.role}</p>
@@ -208,12 +292,29 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                             {entry.startTime && entry.endTime ? calculateDuration(entry.startTime, entry.endTime) : '-'}
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                                                entry.status === 'completed' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${entry.status === 'completed' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
                                                 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
-                                            }`}>
+                                                }`}>
                                                 {entry.status === 'completed' ? 'Terminé' : 'Présent'}
                                             </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEditEntry(entry)}
+                                                    className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded transition-colors"
+                                                    title="Modifier"
+                                                >
+                                                    <Icon name="pencil" className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteEntry(entry.id)}
+                                                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                    title="Supprimer"
+                                                >
+                                                    <Icon name="trash" className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -227,24 +328,53 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <ConfirmationModal
+                isOpen={isResetModalOpen}
+                onClose={() => setIsResetModalOpen(false)}
+                onConfirm={confirmReset}
+                title="Réinitialiser le pointage"
+                message="Êtes-vous sûr de vouloir réinitialiser le pointage de ce membre pour aujourd'hui ? Cette action est irréversible."
+                confirmLabel="Réinitialiser"
+                cancelLabel="Annuler"
+                isDangerous={true}
+            />
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDeleteEntry}
+                title="Supprimer le pointage"
+                message="Êtes-vous sûr de vouloir supprimer ce pointage ? Cette action est irréversible."
+                confirmLabel="Supprimer"
+                cancelLabel="Annuler"
+                isDangerous={true}
+            />
+
+            <ClockingFormModal
+                isOpen={isClockingModalOpen}
+                onClose={() => setIsClockingModalOpen(false)}
+                onSubmit={handleSaveEntry}
+                entryToEdit={entryToEdit}
+                teamMembers={teamMembers}
+            />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Pointage & Heures</h1>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Suivi de Pointage</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">
-                        Gérez les arrivées et départs des équipes sur le chantier.
+                        Gérez les présences et les heures de travail de vos équipes.
                     </p>
                 </div>
-                
-                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start md:self-auto">
                     <button
-                        onClick={() => { setViewMode('daily'); setSelectedHistoryDate(null); }}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'daily' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                        onClick={() => setViewMode('daily')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${viewMode === 'daily' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                         Journalier
                     </button>
                     <button
                         onClick={() => setViewMode('history')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'history' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${viewMode === 'history' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                         Historique
                     </button>
@@ -253,49 +383,59 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
 
             {viewMode === 'daily' ? (
                 <>
-                    <div className="flex justify-end">
-                        <div className="flex items-center bg-white dark:bg-card-dark rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-1">
-                            <button onClick={handlePrevDay} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300">
-                                <Icon name="arrowLeft" className="w-5 h-5" />
-                            </button>
-                            <div className="px-4 py-1 text-center min-w-[150px]">
-                                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                    {/* Date Navigation & Stats */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Date Nav */}
+                        <div className="lg:col-span-1 bg-white dark:bg-card-dark p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-center">
+                            <div className="flex items-center justify-between mb-2">
+                                <button onClick={handlePrevDay} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+                                    <Icon name="arrowLeft" className="w-5 h-5" />
+                                </button>
+                                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 capitalize">
                                     {currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                </span>
+                                </h2>
+                                <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+                                    <Icon name="arrowRight" className="w-5 h-5" />
+                                </button>
                             </div>
-                            <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300">
-                                <Icon name="arrowRight" className="w-5 h-5" />
-                            </button>
+                            <div className="text-center">
+                                <button
+                                    onClick={() => setCurrentDate(new Date())}
+                                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                                >
+                                    Revenir à aujourd'hui
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Présents (Actuels)</p>
-                                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</p>
+                        {/* Stats Cards */}
+                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Présents</p>
+                                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                    <Icon name="check" className="w-5 h-5" />
+                                </div>
                             </div>
-                            <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                <Icon name="users" className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Terminés</p>
+                                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{completedCount}</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                    <Icon name="checkDouble" className="w-5 h-5" />
+                                </div>
                             </div>
-                        </div>
-                        <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Absents / Non pointés</p>
-                                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{absentCount}</p>
-                            </div>
-                            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                <Icon name="clock" className="w-6 h-6 text-slate-500 dark:text-slate-400" />
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Journée Terminée</p>
-                                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{completedCount}</p>
-                            </div>
-                            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                                <Icon name="chart-bar" className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                            <div className="bg-white dark:bg-card-dark p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Absents</p>
+                                    <p className="text-2xl font-bold text-slate-600 dark:text-slate-300">{absentCount}</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                    <Icon name="close" className="w-5 h-5" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -311,36 +451,52 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                             return (
                                 <div key={member.id} className={`
                                     relative overflow-hidden rounded-xl shadow-sm transition-all border
-                                    ${isPresent ? 'bg-white dark:bg-card-dark border-emerald-200 dark:border-emerald-800 ring-1 ring-emerald-100 dark:ring-emerald-900' : 
-                                    isCompleted ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700' : 
-                                    'bg-white dark:bg-card-dark border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'}
+                                    ${isPresent ? 'bg-white dark:bg-card-dark border-emerald-200 dark:border-emerald-800 ring-1 ring-emerald-100 dark:ring-emerald-900' :
+                                        isCompleted ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700' :
+                                            'bg-white dark:bg-card-dark border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'}
                                 `}>
                                     {/* Status Stripe */}
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                                        isPresent ? 'bg-emerald-500' : 
-                                        isCompleted ? 'bg-indigo-500' : 
-                                        'bg-slate-300 dark:bg-slate-600'
-                                    }`}></div>
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isPresent ? 'bg-emerald-500' :
+                                        isCompleted ? 'bg-indigo-500' :
+                                            'bg-slate-300 dark:bg-slate-600'
+                                        }`}></div>
 
                                     <div className="p-5 pl-6">
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-3">
-                                                <img src={member.avatarUrl} alt={member.name} className={`w-12 h-12 rounded-full object-cover border-2 ${isPresent ? 'border-emerald-500' : 'border-transparent'}`} />
+                                                {member.avatarUrl ? (
+                                                    <img src={member.avatarUrl} alt={member.name} className={`w-12 h-12 rounded-full object-cover border-2 ${isPresent ? 'border-emerald-500' : 'border-transparent'}`} />
+                                                ) : (
+                                                    <div className={`w-12 h-12 rounded-full border-2 ${isPresent ? 'border-emerald-500' : 'border-transparent'} bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center`}>
+                                                        <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{getInitials(member.name)}</span>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <h3 className="font-bold text-slate-800 dark:text-slate-100">{member.name}</h3>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">{member.role}</p>
                                                 </div>
                                             </div>
-                                            <div className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                                                isPresent ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
-                                                isCompleted ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
-                                                'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600'
-                                            }`}>
-                                                {isPresent ? 'Présent' : isCompleted ? 'Terminé' : 'Absent'}
+                                            <div className="flex items-center gap-2">
+                                                <div className={`px-2.5 py-1 rounded-full text-xs font-bold border ${isPresent ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
+                                                    isCompleted ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' :
+                                                        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600'
+                                                    }`}>
+                                                    {isPresent ? 'Présent' : isCompleted ? 'Terminé' : 'Absent'}
+                                                </div>
+                                                {!isAbsent && (
+                                                    <button
+                                                        onClick={() => handleReset(member.id)}
+                                                        className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                                        title="Réinitialiser"
+                                                    >
+                                                        <Icon name="trash" className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
 
                                         <div className="mt-5 grid grid-cols-2 gap-3">
+                                            {/* ... (existing time display) */}
                                             <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg text-center">
                                                 <span className="block text-xs text-slate-500 dark:text-slate-400 uppercase">Début</span>
                                                 <span className={`font-mono font-semibold ${entry?.startTime ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>
@@ -357,7 +513,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
 
                                         <div className="mt-5">
                                             {isAbsent && (
-                                                <button 
+                                                <button
                                                     onClick={() => handleClockIn(member.id)}
                                                     className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow-sm transition-colors flex items-center justify-center"
                                                 >
@@ -366,7 +522,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                                 </button>
                                             )}
                                             {isPresent && (
-                                                <button 
+                                                <button
                                                     onClick={() => handleClockOut(member.id, entry!.id)}
                                                     className="w-full py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-semibold shadow-sm transition-colors flex items-center justify-center"
                                                 >
@@ -388,6 +544,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                     </div>
                 </>
             ) : (
+                // ... (existing history view)
                 // VUE HISTORIQUE
                 <div className="space-y-6">
                     {selectedHistoryDate ? (
@@ -399,13 +556,13 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                 <div className="flex items-center gap-4">
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Grouper par :</span>
                                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                        <button 
+                                        <button
                                             onClick={() => setHistoryGroup('weekly')}
                                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${historyGroup === 'weekly' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             Hebdomadaire
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => setHistoryGroup('monthly')}
                                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${historyGroup === 'monthly' ? 'bg-white dark:bg-card-dark shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
@@ -413,6 +570,13 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                         </button>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={handleNewEntry}
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors flex items-center"
+                                >
+                                    <Icon name="plus" className="w-4 h-4 mr-2" />
+                                    Ajouter un pointage
+                                </button>
                             </div>
 
                             {/* Grouped Days List */}
@@ -434,7 +598,7 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                                 const isToday = dateStr === formattedDate;
 
                                                 return (
-                                                    <button 
+                                                    <button
                                                         key={dateStr}
                                                         onClick={() => setSelectedHistoryDate(dateStr)}
                                                         className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
@@ -448,14 +612,14 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{entries.length} pointages enregistrés</p>
                                                             </div>
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-6">
                                                             <div className="text-right">
                                                                 <span className="block text-xs text-slate-400 uppercase font-semibold">Présence</span>
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                                                        <div 
-                                                                            className="h-full bg-emerald-500" 
+                                                                        <div
+                                                                            className="h-full bg-emerald-500"
                                                                             style={{ width: `${(totalPresent / totalTeam) * 100}%` }}
                                                                         ></div>
                                                                     </div>
@@ -474,9 +638,9 @@ export const Clocking: React.FC<ClockingProps> = ({ teamMembers, clockingEntries
                                 ))
                             ) : (
                                 <div className="bg-white dark:bg-card-dark rounded-xl shadow-sm p-8 text-center border border-slate-200 dark:border-slate-700">
-                                     <div className="bg-slate-50 dark:bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <div className="bg-slate-50 dark:bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                                         <Icon name="search" className="w-6 h-6 text-slate-400" />
-                                     </div>
+                                    </div>
                                     <p className="text-slate-500 dark:text-slate-400">Aucun historique de pointage disponible.</p>
                                 </div>
                             )}

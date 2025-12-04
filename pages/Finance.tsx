@@ -6,6 +6,7 @@ import { DoughnutChart } from '../components/DoughnutChart';
 import { FinanceFormModal } from '../components/FinanceFormModal';
 import { InvoiceFormModal } from '../components/InvoiceFormModal';
 import { InvoicePreviewModal } from '../components/InvoicePreviewModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import type { FinancialRecord, Project, TransactionType, TransactionStatus, Invoice } from '../types';
 
 interface FinanceProps {
@@ -35,7 +36,7 @@ const KPICard: React.FC<{ title: string; value: string; icon: string; trend?: st
 );
 
 const StatusBadge: React.FC<{ status: TransactionStatus | string }> = ({ status }) => {
-    const colors: {[key: string]: string} = {
+    const colors: { [key: string]: string } = {
         Paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800',
         Pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800',
         Overdue: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800',
@@ -43,11 +44,11 @@ const StatusBadge: React.FC<{ status: TransactionStatus | string }> = ({ status 
         Draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',
         Sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     };
-    const labels: {[key: string]: string} = { 
-        Paid: 'Payé', Pending: 'En attente', Overdue: 'En retard', 
+    const labels: { [key: string]: string } = {
+        Paid: 'Payé', Pending: 'En attente', Overdue: 'En retard',
         Draft: 'Brouillon', Sent: 'Envoyée'
     };
-    
+
     return (
         <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${colors[status] || colors.Draft}`}>
             {labels[status] || status}
@@ -58,12 +59,16 @@ const StatusBadge: React.FC<{ status: TransactionStatus | string }> = ({ status 
 export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancialRecords, invoices, setInvoices, projects }) => {
     const [activeTab, setActiveTab] = useState<'treasury' | 'invoices'>('treasury');
     const [filterProject, setFilterProject] = useState<string>('all');
-    
+
     // Modals State
     const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+    // Delete Confirmation State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'transaction' | 'invoice' } | null>(null);
 
     // --- TREASURY LOGIC ---
     const filteredRecords = financialRecords.filter(r => filterProject === 'all' || r.projectId === filterProject);
@@ -100,16 +105,17 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
     };
 
     const handleDeleteTransaction = (id: string) => {
-        if(window.confirm('Supprimer cette transaction ?')) setFinancialRecords(prev => prev.filter(r => r.id !== id));
+        setItemToDelete({ id, type: 'transaction' });
+        setIsDeleteModalOpen(true);
     };
 
     // --- INVOICE LOGIC ---
     const filteredInvoices = invoices.filter(i => filterProject === 'all' || i.projectId === filterProject);
-    
+
     const handleCreateInvoice = (invoiceData: Omit<Invoice, 'id'>) => {
         const newInvoice = { ...invoiceData, id: `inv-${Date.now()}` };
         setInvoices(prev => [newInvoice, ...prev]);
-        
+
         // Automatically create a financial record if needed, or just keep it separate.
         // For now, let's just add the invoice.
     };
@@ -120,18 +126,31 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
     };
 
     const handleDeleteInvoice = (id: string) => {
-        if(window.confirm('Supprimer cette facture ?')) setInvoices(prev => prev.filter(i => i.id !== id));
+        setItemToDelete({ id, type: 'invoice' });
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (!itemToDelete) return;
+
+        if (itemToDelete.type === 'transaction') {
+            setFinancialRecords(prev => prev.filter(r => r.id !== itemToDelete.id));
+        } else {
+            setInvoices(prev => prev.filter(i => i.id !== itemToDelete.id));
+        }
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
     };
 
     return (
         <>
-            <FinanceFormModal 
-                isOpen={isFinanceModalOpen} 
-                onClose={() => setIsFinanceModalOpen(false)} 
+            <FinanceFormModal
+                isOpen={isFinanceModalOpen}
+                onClose={() => setIsFinanceModalOpen(false)}
                 onSubmit={handleAddTransaction}
                 projects={projects}
             />
-            
+
             <InvoiceFormModal
                 isOpen={isInvoiceModalOpen}
                 onClose={() => setIsInvoiceModalOpen(false)}
@@ -139,10 +158,23 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                 projects={projects}
             />
 
-            <InvoicePreviewModal 
+            <InvoicePreviewModal
                 isOpen={isPreviewModalOpen}
                 onClose={() => setIsPreviewModalOpen(false)}
                 invoice={selectedInvoice}
+            />
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title={itemToDelete?.type === 'transaction' ? "Supprimer la transaction" : "Supprimer la facture"}
+                message={itemToDelete?.type === 'transaction'
+                    ? "Êtes-vous sûr de vouloir supprimer cette transaction ? Cette action est irréversible."
+                    : "Êtes-vous sûr de vouloir supprimer cette facture ? Cette action est irréversible."}
+                confirmLabel="Supprimer"
+                cancelLabel="Annuler"
+                isDangerous={true}
             />
 
             <div className="space-y-8">
@@ -153,7 +185,7 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                         <p className="mt-1 text-slate-600 dark:text-slate-400">Gérez votre trésorerie, vos dépenses et générez vos factures.</p>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
-                        <select 
+                        <select
                             value={filterProject}
                             onChange={(e) => setFilterProject(e.target.value)}
                             className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-48 p-2.5"
@@ -188,7 +220,7 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                     <div className="space-y-6 animate-fadeIn">
                         {/* Actions Bar Treasury */}
                         <div className="flex justify-end">
-                            <button 
+                            <button
                                 onClick={() => setIsFinanceModalOpen(true)}
                                 className="flex items-center justify-center bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors"
                             >
@@ -209,18 +241,18 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2 bg-white dark:bg-card-dark p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
                                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Évolution du CA</h3>
-                                <div className="h-72"><LineChart data={lineChartData.length > 0 ? lineChartData : [{label: 'Jan', value: 0}]} /></div>
+                                <div className="h-72"><LineChart data={lineChartData.length > 0 ? lineChartData : [{ label: 'Jan', value: 0 }]} /></div>
                             </div>
                             <div className="bg-white dark:bg-card-dark p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
                                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Répartition Dépenses</h3>
-                                <div className="flex justify-center py-4"><DoughnutChart data={doughnutData.length > 0 ? doughnutData : [{label: 'Aucune', value: 1, color: '#e2e8f0'}]} /></div>
+                                <div className="flex justify-center py-4"><DoughnutChart data={doughnutData.length > 0 ? doughnutData : [{ label: 'Aucune', value: 1, color: '#e2e8f0' }]} /></div>
                             </div>
                         </div>
 
                         {/* Transactions Table */}
                         <div className="bg-white dark:bg-card-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">
-                             <div className="p-6 border-b border-slate-100 dark:border-slate-700"><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Dernières Transactions</h3></div>
-                             <div className="overflow-x-auto">
+                            <div className="p-6 border-b border-slate-100 dark:border-slate-700"><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Dernières Transactions</h3></div>
+                            <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead className="bg-slate-50 dark:bg-slate-800">
                                         <tr>
@@ -234,7 +266,7 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                        {filteredRecords.length > 0 ? filteredRecords.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => (
+                                        {filteredRecords.length > 0 ? filteredRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => (
                                             <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                 <td className="p-4 text-slate-500">{new Date(record.date).toLocaleDateString('fr-FR')}</td>
                                                 <td className="p-4 font-medium text-slate-800 dark:text-slate-200">{record.description} <span className="block text-xs text-slate-400">{record.reference}</span></td>
@@ -247,14 +279,14 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                                         )) : <tr><td colSpan={7} className="p-8 text-center text-slate-500">Aucune transaction.</td></tr>}
                                     </tbody>
                                 </table>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-fadeIn">
-                         {/* Actions Bar Invoice */}
-                         <div className="flex justify-end">
-                            <button 
+                        {/* Actions Bar Invoice */}
+                        <div className="flex justify-end">
+                            <button
                                 onClick={() => setIsInvoiceModalOpen(true)}
                                 className="flex items-center justify-center bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors"
                             >
@@ -281,7 +313,7 @@ export const Finance: React.FC<FinanceProps> = ({ financialRecords, setFinancial
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                        {filteredInvoices.length > 0 ? filteredInvoices.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(invoice => (
+                                        {filteredInvoices.length > 0 ? filteredInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(invoice => (
                                             <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                 <td className="p-4 font-medium text-indigo-600 dark:text-indigo-400">{invoice.number}</td>
                                                 <td className="p-4 text-slate-800 dark:text-slate-200">{invoice.clientName}</td>

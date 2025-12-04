@@ -5,9 +5,9 @@ import { TaskStatus } from '../types';
 import { Icon } from '../components/Icon';
 
 interface PlanningProps {
-  projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
-  teamMembers: TeamMember[];
+    projects: Project[];
+    setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+    teamMembers: TeamMember[];
 }
 
 // --- CONSTANTES & TYPES LOCAUX ---
@@ -113,10 +113,10 @@ const EventModal: React.FC<{
             <div className="bg-white dark:bg-card-dark w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-fadeIn" onClick={e => e.stopPropagation()}>
                 <div className="p-6 space-y-5">
                     <div className="flex justify-between items-start">
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             value={formData.title}
-                            onChange={e => setFormData({...formData, title: e.target.value})}
+                            onChange={e => setFormData({ ...formData, title: e.target.value })}
                             placeholder="Titre de l'événement"
                             className="text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:ring-0 p-0 w-full placeholder-slate-400 dark:placeholder-slate-500"
                             autoFocus
@@ -131,19 +131,19 @@ const EventModal: React.FC<{
                         </div>
                         <div className="flex items-center gap-3 pl-8">
                             <div className="relative">
-                                <input 
-                                    type="time" 
+                                <input
+                                    type="time"
                                     value={formData.startTime}
-                                    onChange={e => setFormData({...formData, startTime: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, startTime: e.target.value })}
                                     className="bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 px-2 text-sm font-semibold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
                             <span className="text-slate-400">-</span>
                             <div className="relative">
-                                <input 
-                                    type="time" 
+                                <input
+                                    type="time"
                                     value={formData.endTime}
-                                    onChange={e => setFormData({...formData, endTime: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, endTime: e.target.value })}
                                     className="bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 px-2 text-sm font-semibold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
@@ -152,10 +152,10 @@ const EventModal: React.FC<{
 
                     <div className="flex items-center text-slate-600 dark:text-slate-300">
                         <Icon name="pin_drop" className="w-5 h-5 mr-3 text-slate-400" />
-                        <input 
+                        <input
                             type="text"
                             value={formData.location}
-                            onChange={e => setFormData({...formData, location: e.target.value})}
+                            onChange={e => setFormData({ ...formData, location: e.target.value })}
                             placeholder="Lieu ou lien visio"
                             className="bg-transparent border-none focus:ring-0 p-0 text-sm w-full text-indigo-500 underline truncate placeholder-slate-400"
                         />
@@ -166,27 +166,26 @@ const EventModal: React.FC<{
                             <button
                                 key={cat.id}
                                 type="button"
-                                onClick={() => setFormData({...formData, category: cat.id})}
-                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                                    formData.category === cat.id 
-                                        ? `${cat.color} text-white shadow-md scale-105` 
+                                onClick={() => setFormData({ ...formData, category: cat.id })}
+                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${formData.category === cat.id
+                                        ? `${cat.color} text-white shadow-md scale-105`
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                }`}
+                                    }`}
                             >
                                 {cat.label}
                             </button>
                         ))}
                     </div>
-                    
+
                     <div className="pt-2">
-                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Projet</label>
-                         <select 
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Projet</label>
+                        <select
                             value={formData.projectId}
-                            onChange={e => setFormData({...formData, projectId: e.target.value})}
+                            onChange={e => setFormData({ ...formData, projectId: e.target.value })}
                             className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-indigo-500"
-                         >
-                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                         </select>
+                        >
+                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
@@ -204,7 +203,7 @@ const EventModal: React.FC<{
                 </div>
 
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
-                    <button 
+                    <button
                         onClick={handleSubmit}
                         className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center"
                     >
@@ -222,7 +221,7 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(projects.map(p => p.id));
     const [showFilters, setShowFilters] = useState(false);
-    
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
@@ -240,9 +239,9 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
         });
     }, [projects]);
 
-    const visibleTasks = useMemo(() => 
-        allTasks.filter(t => selectedProjectIds.includes(t.projectId)), 
-    [allTasks, selectedProjectIds]);
+    const visibleTasks = useMemo(() =>
+        allTasks.filter(t => selectedProjectIds.includes(t.projectId)),
+        [allTasks, selectedProjectIds]);
 
     // --- NAVIGATION ---
 
@@ -278,18 +277,18 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
             const newProjects = [...prevProjects];
             const targetProjectId = taskData.projectId || (taskToEdit && projects.find(proj => proj.tasks.find(t => t.id === taskToEdit.id))?.id);
             const projectIndex = newProjects.findIndex(p => p.id === targetProjectId);
-            
+
             if (projectIndex === -1) return prevProjects;
 
             const project = { ...newProjects[projectIndex] };
-            
+
             if (taskToEdit) {
                 project.tasks = project.tasks.map(t => t.id === taskToEdit.id ? { ...t, ...taskData } : t);
             } else {
                 const newTask: Task = {
                     id: `task-${Date.now()}`,
                     title: taskData.title || 'Nouvel événement',
-                    assignedTo: 'Moi', 
+                    assignedTo: 'Moi',
                     status: TaskStatus.ToDo,
                     dueDate: taskData.dueDate || new Date().toISOString().split('T')[0],
                     startTime: taskData.startTime,
@@ -305,12 +304,48 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
         });
     };
 
+    // --- DRAG AND DROP ---
+
+    const handleDragStart = (e: React.DragEvent, task: Task) => {
+        e.dataTransfer.setData('taskId', task.id);
+        e.dataTransfer.setData('projectId', projects.find(p => p.tasks.some(t => t.id === task.id))?.id || '');
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = (e: React.DragEvent, date: Date) => {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('taskId');
+        const projectId = e.dataTransfer.getData('projectId');
+
+        if (taskId && projectId) {
+            setProjects(prevProjects => {
+                return prevProjects.map(p => {
+                    if (p.id === projectId) {
+                        return {
+                            ...p,
+                            tasks: p.tasks.map(t => {
+                                if (t.id === taskId) {
+                                    return { ...t, dueDate: date.toISOString().split('T')[0] };
+                                }
+                                return t;
+                            })
+                        };
+                    }
+                    return p;
+                });
+            });
+        }
+    };
+
     const monthDays = getMonthDays(currentDate.getFullYear(), currentDate.getMonth());
 
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] font-display overflow-hidden">
-            
-            <EventModal 
+
+            <EventModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 selectedDate={modalDate}
@@ -324,7 +359,7 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
             <div className="flex items-center justify-between mb-4 shrink-0">
                 <div className="flex items-center gap-4">
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Planning</h1>
-                    
+
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 ml-2">
                         <button onClick={handlePrev} className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300 transition-colors">
                             <Icon name="arrowLeft" className="w-4 h-4" />
@@ -337,18 +372,18 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
                         </button>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     {/* Project Filter Dropdown */}
                     <div className="relative">
-                        <button 
+                        <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                         >
                             <Icon name="filter" className="w-4 h-4 mr-2" />
                             Projets
                         </button>
-                        
+
                         {showFilters && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setShowFilters(false)}></div>
@@ -357,9 +392,9 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
                                         {projects.map(p => {
                                             const isChecked = selectedProjectIds.includes(p.id);
                                             return (
-                                                <button 
-                                                    key={p.id} 
-                                                    className="flex items-center gap-3 w-full text-left p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" 
+                                                <button
+                                                    key={p.id}
+                                                    className="flex items-center gap-3 w-full text-left p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                                     onClick={() => setSelectedProjectIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
                                                 >
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked ? `bg-indigo-600 border-indigo-600 text-white` : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'}`}>
@@ -387,9 +422,9 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
 
             {/* Month Grid - Seamless, No Card Background */}
             <div className="flex-1 grid grid-cols-7 grid-rows-[auto_repeat(6,1fr)] border-t border-l border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-card-dark">
-                
+
                 {/* Headers */}
-                {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
+                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
                     <div key={d} className="py-2 text-center font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 text-xs uppercase tracking-wide border-r border-b border-slate-200 dark:border-slate-700">
                         {d}
                     </div>
@@ -399,11 +434,13 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
                 {monthDays.map((d, i) => {
                     const isToday = d.date.toDateString() === new Date().toDateString();
                     const dayTasks = visibleTasks.filter(t => t.dueDate === d.date.toISOString().split('T')[0]);
-                    
+
                     return (
-                        <div 
-                            key={i} 
+                        <div
+                            key={i}
                             onClick={() => handleCellClick(d.date)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, d.date)}
                             className={`
                                 relative p-1 transition-colors cursor-pointer group flex flex-col gap-1 border-r border-b border-slate-200 dark:border-slate-700
                                 ${!d.isCurrentMonth ? 'bg-slate-50/50 dark:bg-slate-800/50 text-slate-400' : 'bg-white dark:bg-card-dark hover:bg-slate-50 dark:hover:bg-slate-800'}
@@ -412,12 +449,18 @@ export const Planning: React.FC<PlanningProps> = ({ projects, setProjects, teamM
                             <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium mb-1 ${isToday ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300'}`}>
                                 {d.date.getDate()}
                             </div>
-                            
+
                             <div className="flex-1 flex flex-col gap-1 overflow-hidden">
                                 {dayTasks.slice(0, 5).map(task => {
                                     const categoryColor = categories.find(c => c.id === task.category)?.color || 'bg-slate-500';
                                     return (
-                                        <div key={task.id} onClick={(e) => handleTaskClick(task, e)} className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <div
+                                            key={task.id}
+                                            onClick={(e) => handleTaskClick(task, e)}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, task)}
+                                            className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-move"
+                                        >
                                             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${categoryColor}`}></div>
                                             <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate leading-tight">{task.title}</span>
                                         </div>
